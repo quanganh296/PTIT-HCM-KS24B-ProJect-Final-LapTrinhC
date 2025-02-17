@@ -30,6 +30,11 @@ SupportXPThemes=0
 CompilerSet=0
 CompilerSettings=0000000000000000000000000
 UnitCount=5
+UsePrecompiledHeader=0
+PrecompiledHeader=
+StaticLink=1
+AddCharset=1
+UseUTF8=0
 
 [VersionInfo]
 Major=1
@@ -59,6 +64,8 @@ Link=1
 Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
+DetectEncoding=0
+Encoding=0
 
 [Unit2]
 FileName=datatype.h
@@ -69,6 +76,8 @@ Link=1
 Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
+DetectEncoding=0
+Encoding=0
 
 [Unit3]
 FileName=function.h
@@ -79,6 +88,8 @@ Link=1
 Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
+DetectEncoding=0
+Encoding=0
 
 [Unit1]
 FileName=main.c
@@ -89,6 +100,8 @@ Link=1
 Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
+DetectEncoding=0
+Encoding=0
 
 [Unit5]
 FileName=user.bin
@@ -98,4 +111,6 @@ Link=0
 Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
+DetectEncoding=0
+Encoding=0
 

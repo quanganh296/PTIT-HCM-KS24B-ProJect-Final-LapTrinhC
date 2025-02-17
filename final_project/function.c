@@ -307,6 +307,40 @@ void sortUsersByNameDescending() {
     qsort(users, userCount, sizeof(User), compareByNameDescending);
     printf("Sorted by Name (Z-A) successfully!\n");
 }
+void menuSortUsers(){
+    
+system("cls");
+   
+
+    int choice;
+    printf("\n*** Display Users ***\n");
+    printf("============================\n");
+    printf("[1] Sort Users by Name (A-Z)\n");
+    printf("[2] Sort Users by Name (Z-A)\n");
+    printf("[0] Back to display users menu\n");
+    printf("============================\n");
+    printf("Enter Your Choice: ");
+    scanf("%d", &choice);
+    while (getchar() != '\n'); 
+
+    switch (choice) {
+        case 1:
+          sortUsersByName(); 
+            break; 
+        case 2:
+            sortUsersByNameDescending();
+            break;
+        case 0:
+            return;  
+        default:
+            printf("Invalid option! Choose again!\n");
+    }
+
+    printf("Press ENTER to go back...");
+    while (getchar() != '\n');
+}
+
+
 
 
 void displaySortUsers() {
@@ -344,11 +378,15 @@ void addUser() {
 
         if (strlen(newUser.userId) == 0) {
             printf("User ID cannot be empty. Please enter again!\n");
+            	 Sleep(1000);
         } else if (userExists(newUser.userId)) {
+        
             printf("User ID already exists! Enter a different one.\n");
+            	 Sleep(1000);
         }
         if (!isValidId(newUser.userId)) {
             printf("Invalid ID! ID must be 3-10 digits.\n");
+            	 Sleep(1000);
         }
     } while (strlen(newUser.userId) == 0 || userExists(newUser.userId) || !isValidId(newUser.userId));
 
@@ -362,6 +400,15 @@ void addUser() {
         }
     } while (strlen(newUser.name) == 0);
 
+  do {
+        printf("Enter Username: ");
+        fgets(newUser.username, sizeof(newUser.username), stdin);
+        newUser.username[strcspn(newUser.username, "\n")] = '\0';
+
+        if (strlen(newUser.username) == 0) {
+            printf("Name cannot be empty. Please enter again!\n");
+        }
+    } while (strlen(newUser.name) == 0);
     do {
         printf("Enter Phone: ");
         fgets(temp, sizeof(temp), stdin);
@@ -555,37 +602,6 @@ void displayUsers() {
 
   
 }
-void menuSortUsers(){
-	
-system("cls");
-   
-
-    int choice;
-    printf("\n*** Display Users ***\n");
-    printf("============================\n");
-    printf("[1] Sort Users by Name (A-Z)\n");
-    printf("[2] Sort Users by Name (Z-A)\n");
-    printf("[0] Back to display users menu\n");
-    printf("============================\n");
-    printf("Enter Your Choice: ");
-    scanf("%d", &choice);
-    while (getchar() != '\n'); 
-
-    switch (choice) {
-        case 1:
-          sortUsersByName(); 
-            break; 
-        case 2:
-            sortUsersByNameDescending();
-            break;
-        case 0:
-            return;  
-        default:
-            printf("Invalid option!Choose again!");
-    }
-
-
-}
 
 
 
@@ -642,15 +658,15 @@ char choice;
 do{
 system("cls");
     printf("\n%8sUser Guideline:\n");
-    printf("%8s1. Use option 1 to add a new user.\n");
-    printf("%8s2. Use option 2 to view all users.\n");
-    printf("%8s3. Use option 3 to view a specific user’s details.\n");
-    printf("%8s4. Use option 4 to lock/unlock users.\n");
-    printf("%8s5. Use option 6 to know more about us (The creator)\n");
-    printf("%8s========================================================================================\n");
+    printf("%8s1. Use option 1 to add a new user only active with admin role.\n","");
+    printf("%8s2. Use option 2 to view all users and make change only active with admin role.\n","");
+    printf("%8s3. Use option 3 to view a specific user details.\n","");
+    printf("%8s4. Use option 4 to lock/unlock users only active with admin role.\n","");
+    printf("%8s5. Use option 6 to know more about us (The creator)\n","");
+    printf("%8s========================================================================================\n","");
 
        
-        printf("%8sGo back(b)? or Exit(0)?: ");
+        printf("%8sGo back(b)? or Exit(0)?: ","");
         scanf(" %c", &choice);
         while (getchar() != '\n'); 
 
@@ -663,23 +679,23 @@ printf("%8s========= See You Soon ======\n", "");
     } while (choice != 'b');
 }
 void aboutUs() {
-int choice;
-do{
-
-    printf("\n%8sAbout Us:\n");
-    printf("%8sThis is a program make by Nguyen Quang Anh with C language.\n");
-    printf("%8sIt allows user registration, viewing details, and managing access.\n");
-    printf("%8s========================================================================================\n");
-
+    char choice;  
+    do {
+    	system("cls");
+        printf("\n%8sAbout Us:\n", "");
+        printf("%8sThis is a program made by Nguyen Quang Anh using the C language.\n", "");
+        printf("%8sIt allows user registration, viewing details, and managing access.\n", "");
+        printf("%8s========================================================================================\n", "");
        
-        printf("%8sGo back(b)? or Exit(0)?: ");
+        printf("%8sGo back (b)? or Exit (0)?: ", "");
         scanf(" %c", &choice);
         while (getchar() != '\n'); 
 
         if (choice == '0') {
-        system("cls");
-    printf("%8s========= Thank You =========\n", "");
-printf("%8s========= See You Soon ======\n", "");
+           system("cls");
+
+            printf("%8s========= Thank You =========\n", "");
+            printf("%8s========= See You Soon ======\n", "");
             exit(0);
         }
     } while (choice != 'b');
@@ -706,6 +722,7 @@ void showUserDetail() {
             printf("%8s%s", "", "===========================================\n");
             printf("%11s%s\n", "ID:", users[i].userId);
             printf("%13s%s\n", "Name:", users[i].name);
+             printf("%17s%s\n", "Username:", users[i].username);
             printf("%8s%s\n", "", "Date of Birth:");
             printf("%19s%d\n", "Day:", users[i].dateOfBirth.day);
             printf("%19s%d\n", "Month:", users[i].dateOfBirth.month);
@@ -822,6 +839,14 @@ void changeUserInfo() {
                 }
             } while (strlen(users[i].name) == 0);  // Changed from newUser to users[i]
            
+            do { 
+		                   printf("Enter new Username: ");
+		                   fgets(users[i].username, sizeof(users[i].username), stdin);
+		                   users[i].username[strcspn(users[i].username, "\n")] = '\0'; 
+		                   if (strlen(users[i].username) == 0) {  // Changed from newUser to users[i]
+		                       printf("Username cannot be empty. Please enter again!\n");
+		                   }
+		               } while (strlen(users[i].username) == 0);  // Changed from newUser to users[i]
             // Validate phone input
             char temp[100];
             do {
