@@ -41,6 +41,8 @@ void userLogin();
 //change user info
 void changeUserInfo();
 void resetUserData();
+void showUserDetailToChange(); 
+ 
 //User management
 void UserMoneyManagement();
 #endif

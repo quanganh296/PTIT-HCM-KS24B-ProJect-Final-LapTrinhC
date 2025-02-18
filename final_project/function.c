@@ -86,87 +86,80 @@ int isValidPasswordAdmin(const char *password, const char *phone) {
 
 
 void saveUsersToFile() {
-    FILE *file = fopen("user.bin", "wb");
-    if (file) {
-        fwrite(&userCount, sizeof(int), 1, file);
-        fwrite(users, sizeof(User), userCount, file);
-        fclose(file);
+    FILE *file = fopen(DATA_FILE, "wb"); // Open file in write-binary mode
+    if (!file) {
+        printf("Error opening file for writing!\n");
+        return;
     }
+
+    fwrite(&userCount, sizeof(int), 1, file);
+    fwrite(users, sizeof(User), userCount, file);
+
+    // Debug: Print data being saved
+    printf("Saving %d users to file\n", userCount);
+    for (int i = 0; i < userCount; i++) {
+        printf("User %d: ID=%s, Email=%s, Password=%s\n", 
+               i + 1, users[i].userId, users[i].email, users[i].password);
+    }
+
+    fclose(file);
 }
 
 void loadUsersFromFile() {
-    FILE *file = fopen(DATA_FILE, "rb");
-    if (file) {
-    	  printf("Loaded %d users from file\n", userCount);
-		    for (int i = 0; i < userCount; i++) {
-		        printf("User %d: ID=%s, Email=%s, Has password: %s\n", 
-		               i+1, users[i].userId, users[i].email, 
-		               strlen(users[i].password) > 0 ? "Yes" : "No");
-        // Read user count
-        size_t items_read = fread(&userCount, sizeof(int), 1, file);
-        if (items_read != 1) {
-            userCount = 0;
-             fread(&userCount, sizeof(int), 1, file);
-			        fread(users, sizeof(User), userCount, file);
-            fclose(file);
-            printf("Warning: Couldn't read user count from file.\n");
-            return;
-        }
-        
-        // Validate user count
-        if (userCount < 0 || userCount > MAX_USERS) {
-            printf("Warning: Invalid user count (%d) in file. Resetting...\n", userCount);
-            userCount = 0;
-            fclose(file);
-            resetUserData();
-            return;
-        }
-        
-        // Initialize all users to zero
-        memset(users, 0, sizeof(User) * MAX_USERS);
-        
-        // Read user data
-        items_read = fread(users, sizeof(User), userCount, file);
-        if (items_read != userCount) {
-            printf("Warning: Expected %d users but read %zu. Adjusting...\n", 
-                   userCount, items_read);
-            userCount = items_read;
-        }
-        
-        fclose(file);
-        
-        // Validate all loaded users
-        int valid_count = 0;
-        for (int i = 0; i < userCount; i++) {
-            // Basic validation: Check if user has valid date and non-empty ID
-            if (strlen(users[i].userId) > 0 && 
-                isValidDate(users[i].dateOfBirth.day, 
-                           users[i].dateOfBirth.month, 
-                           users[i].dateOfBirth.year)) {
-                // If valid, keep it (potentially moving it earlier in the array)
-                if (i != valid_count) {
-                    users[valid_count] = users[i];
-                }
-                valid_count++;
-            } else {
-                printf("Warning: Found corrupted user data for ID: %s\n", 
-                       users[i].userId);
-            }
-        }
-        
-        if (valid_count != userCount) {
-            printf("Warning: %d out of %d users had invalid data and were removed.\n",
-                   userCount - valid_count, userCount);
-            userCount = valid_count;
-            saveUsersToFile(); // Save the cleaned-up data
-        }
-    }}else {
+    FILE *file = fopen(DATA_FILE, "rb"); // Open file in read-binary mode
+    if (!file) {
+        printf("No user data found. Initializing empty user list.\n");
         userCount = 0;
+        return;
+    }
+
+    // Read the number of users
+    size_t items_read = fread(&userCount, sizeof(int), 1, file);
+    if (items_read != 1 || userCount < 0 || userCount > MAX_USERS) {
+        printf("Warning: Invalid user count (%d) in file. Resetting...\n", userCount);
+        fclose(file);
+        userCount = 0;
+        return;
+    }
+
+    // Read the user data
+    items_read = fread(users, sizeof(User), userCount, file);
+    if (items_read != userCount) {
+        printf("Warning: Expected %d users but read %zu. Adjusting...\n", userCount, items_read);
+        userCount = items_read;
+    }
+
+    fclose(file);
+
+    // Validate all loaded users
+    int valid_count = 0;
+    for (int i = 0; i < userCount; i++) {
+        // Basic validation: Check if user has valid date and non-empty ID
+        if (strlen(users[i].userId) > 0 && 
+            isValidDate(users[i].dateOfBirth.day, 
+                        users[i].dateOfBirth.month, 
+                        users[i].dateOfBirth.year)) {
+            // If valid, keep it (potentially moving it earlier in the array)
+            if (i != valid_count) {
+                users[valid_count] = users[i];
+            }
+            valid_count++;
+        } else {
+            printf("Warning: Found corrupted user data for ID: %s\n", 
+                   users[i].userId);
+        }
+    }
+
+    if (valid_count != userCount) {
+        printf("Warning: %d out of %d users had invalid data and were removed.\n",
+               userCount - valid_count, userCount);
+        userCount = valid_count;
+        saveUsersToFile(); // Save the cleaned-up data
     }
 }
 void resetUserData() {
     // Clear all user data
-    userCount = 0;
+  userCount = 0;
     memset(users, 0, sizeof(users));
     
     // Save the empty user array
@@ -199,7 +192,7 @@ void userMenu() {
               
                 break;
             case 2:
-                changeUserInfo();
+                showUserDetailToChange();
                
                 break;
             case 3:
@@ -734,6 +727,51 @@ void showUserDetail() {
     printf("%8s%s", "", "Press ENTER to go back...");
     while (getchar() != '\n');
 }
+void showUserDetailToChange() {
+    system("cls");
+    fflush(stdin);
+    if (userCount == 0) {
+        printf("%8s%s", "", "No users available.\n\n");
+        return;
+    }
+
+    char userId[20]; 
+    printf("%8s%s", "", "Enter User ID to view details to change: ");
+    fgets(userId, sizeof(userId), stdin);
+    userId[strcspn(userId, "\n")] = '\0'; 
+
+    int found = 0;
+    for (int i = 0; i < userCount; i++) {
+        if (strcmp(users[i].userId, userId) == 0) {
+            found = 1;
+            printf("%8s%s", "", "===========================================\n");
+            printf("%8s%s", "", "            CHANGE USER DETAILS\n");
+            printf("%8s%s", "", "===========================================\n");
+            printf("%11s%s\n", "ID:", users[i].userId);
+            printf("%13s%s\n", "Name:", users[i].name);
+            printf("%17s%s\n", "Username:", users[i].username);
+            printf("%8s%s\n", "", "Date of Birth:");
+            printf("%19s%d\n", "Day:", users[i].dateOfBirth.day);
+            printf("%19s%d\n", "Month:", users[i].dateOfBirth.month);
+            printf("%19s%d\n", "Year:", users[i].dateOfBirth.year);
+            printf("%14s%s\n", "Phone:", users[i].phone);
+            printf("%14s%s\n", "Email:", users[i].email);
+            printf("%15s%s\n", "Status:", users[i].status ? "Locked" : "Unlocked");
+            printf("%10s%s", "", "===========================================\n");
+
+            // Call changeUserInfo function to change user details
+            changeUserInfo(i);
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("%8s%s", "", "User ID not found or invalid(ID must be 3-10 digits)!\n");
+    }
+
+    printf("%8s%s", "", "Press ENTER to go back...");
+    while (getchar() != '\n');
+}
 
 
 void showUsers() {
@@ -895,102 +933,83 @@ void userLogin() {
 }
 
 //thay doi thong tin cua nguoi dung
-void changeUserInfo() {
-    char userId[20];
-    printf("Change user info\n");
-    printf("Enter User ID to change info: ");
-
-    fgets(userId, sizeof(userId), stdin);
-    userId[strcspn(userId, "\n")] = '\0'; 
-
-    int found = 0;
-    for (int i = 0; i < userCount; i++) {
-        if (strcmp(users[i].userId, userId) == 0) {
-            found = 1;
-            printf("User %s found!\n", userId);
-            do { 
-                printf("Enter new name: ");
-                fgets(users[i].name, sizeof(users[i].name), stdin);
-                users[i].name[strcspn(users[i].name, "\n")] = '\0'; 
-                if (strlen(users[i].name) == 0) {  // Changed from newUser to users[i]
-                    printf("Name cannot be empty. Please enter again!\n");
-                }
-            } while (strlen(users[i].name) == 0);  // Changed from newUser to users[i]
-           
-            do { 
-		                   printf("Enter new Username: ");
-		                   fgets(users[i].username, sizeof(users[i].username), stdin);
-		                   users[i].username[strcspn(users[i].username, "\n")] = '\0'; 
-		                   if (strlen(users[i].username) == 0) {  // Changed from newUser to users[i]
-		                       printf("Username cannot be empty. Please enter again!\n");
-		                   }
-		               } while (strlen(users[i].username) == 0);  // Changed from newUser to users[i]
-            // Validate phone input
-            char temp[100];
-            do {
-                printf("Enter new phone: ");
-                fgets(temp, sizeof(temp), stdin);
-                temp[strcspn(temp, "\n")] = 0;
-
-                if (!isValidPhone(temp)) {
-                    printf("Invalid phone number! Phone number must be 10-11 digits.\n");
-                }
-            } while (!isValidPhone(temp));
-            strcpy(users[i].phone, temp);
-
-            // Validate email input
-            do {
-                printf("Enter new email: ");
-                fgets(temp, sizeof(temp), stdin);
-                temp[strcspn(temp, "\n")] = 0;
-
-                if (!isValidEmail(temp)) {
-                    printf("Invalid email format! Example: user@example.com\n");
-                }
-            } while (!isValidEmail(temp));
-            strcpy(users[i].email, temp);
-
-            // Validate date input
-            do {
-                printf("Enter new date of birth:\n");
-                printf("  Enter the day: ");
-                if (scanf("%d", &users[i].dateOfBirth.day) != 1) {
-                    printf("Invalid input! Please enter a number.\n");
-                    while (getchar() != '\n'); // Clear buffer
-                    continue;
-                }
-
-                printf("  Enter the month: ");
-                if (scanf("%d", &users[i].dateOfBirth.month) != 1) {
-                    printf("Invalid input! Please enter a number.\n");
-                    while (getchar() != '\n');
-                    continue;
-                }
-
-                printf("  Enter the year: ");
-                if (scanf("%d", &users[i].dateOfBirth.year) != 1) {
-                    printf("Invalid input! Please enter a number.\n");
-                    while (getchar() != '\n');
-                    continue;
-                }
-
-                if (!isValidDate(users[i].dateOfBirth.day, users[i].dateOfBirth.month, users[i].dateOfBirth.year)) {
-                    printf("Invalid date! Please enter a correct date.\n");
-                }
-            } while (!isValidDate(users[i].dateOfBirth.day, users[i].dateOfBirth.month, users[i].dateOfBirth.year));
-
-            while (getchar() != '\n');  // Clear input buffer
-
-            saveUsersToFile();
-            printf("User info updated successfully!\n");
-            break;
+void changeUserInfo(int userIndex) {
+    do { 
+        printf("Enter new name: ");
+        fgets(users[userIndex].name, sizeof(users[userIndex].name), stdin);
+        users[userIndex].name[strcspn(users[userIndex].name, "\n")] = '\0'; 
+        if (strlen(users[userIndex].name) == 0) {
+            printf("Name cannot be empty. Please enter again!\n");
         }
-    }
+    } while (strlen(users[userIndex].name) == 0);
 
-    if (!found) {
-        printf("User ID not found!\n");
-    }
+    do { 
+        printf("Enter new Username: ");
+        fgets(users[userIndex].username, sizeof(users[userIndex].username), stdin);
+        users[userIndex].username[strcspn(users[userIndex].username, "\n")] = '\0'; 
+        if (strlen(users[userIndex].username) == 0) {
+            printf("Username cannot be empty. Please enter again!\n");
+        }
+    } while (strlen(users[userIndex].username) == 0);
 
+    // Validate phone input
+    char temp[100];
+    do {
+        printf("Enter new phone: ");
+        fgets(temp, sizeof(temp), stdin);
+        temp[strcspn(temp, "\n")] = 0;
+
+        if (!isValidPhone(temp)) {
+            printf("Invalid phone number! Phone number must be 10-11 digits.\n");
+        }
+    } while (!isValidPhone(temp));
+    strcpy(users[userIndex].phone, temp);
+
+    // Validate email input
+    do {
+        printf("Enter new email: ");
+        fgets(temp, sizeof(temp), stdin);
+        temp[strcspn(temp, "\n")] = 0;
+
+        if (!isValidEmail(temp)) {
+            printf("Invalid email format! Example: user@example.com\n");
+        }
+    } while (!isValidEmail(temp));
+    strcpy(users[userIndex].email, temp);
+
+    // Validate date input
+    do {
+        printf("Enter new date of birth:\n");
+        printf("  Enter the day: ");
+        if (scanf("%d", &users[userIndex].dateOfBirth.day) != 1) {
+            printf("Invalid input! Please enter a number.\n");
+            while (getchar() != '\n'); // Clear buffer
+            continue;
+        }
+
+        printf("  Enter the month: ");
+        if (scanf("%d", &users[userIndex].dateOfBirth.month) != 1) {
+            printf("Invalid input! Please enter a number.\n");
+            while (getchar() != '\n');
+            continue;
+        }
+
+        printf("  Enter the year: ");
+        if (scanf("%d", &users[userIndex].dateOfBirth.year) != 1) {
+            printf("Invalid input! Please enter a number.\n");
+            while (getchar() != '\n');
+            continue;
+        }
+
+        if (!isValidDate(users[userIndex].dateOfBirth.day, users[userIndex].dateOfBirth.month, users[userIndex].dateOfBirth.year)) {
+            printf("Invalid date! Please enter a correct date.\n");
+        }
+    } while (!isValidDate(users[userIndex].dateOfBirth.day, users[userIndex].dateOfBirth.month, users[userIndex].dateOfBirth.year));
+
+    while (getchar() != '\n');  // Clear input buffer
+
+    saveUsersToFile();
+    printf("User info updated successfully!\n");
     printf("Press ENTER to go back...");
     getchar();
 }
