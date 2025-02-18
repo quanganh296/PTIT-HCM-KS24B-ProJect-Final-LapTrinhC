@@ -20,15 +20,15 @@
 	//	struct Date transactionDate;
 	//};
 	//
-	//struct AccountInfo{
-	//	char userId[20];
-	//	float balance;
-	//	bool status;
-	//	char username[10];
-	//	char password[10];
-	//	struct Transaction transactionHistory[];
-	//};
-	
+typedef struct {
+	char userId[20];
+	float balance;
+//	bool status;
+char username[20];
+	char password[20];
+//		struct Transaction transactionHistory[];
+}AccountInfo;
+extern AccountInfo info[];
 	
 	typedef struct {
 	    char userId[20];
@@ -37,9 +37,6 @@
 	    char phone[15];
 	    char email[30];
 	      int status;
-	      char username[20];
-		    char password[20];
-		    double balance;
 	} User;
 		extern User users[];
 	#endif

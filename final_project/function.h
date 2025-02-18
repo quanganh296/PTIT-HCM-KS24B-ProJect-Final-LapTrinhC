@@ -39,7 +39,7 @@ void inputMaskedPassword();
 void adminLogin();
 void userLogin();
 //change user info
-void changeUserInfo();
+void changeUserInfo(int userIndex);
 void resetUserData();
 void showUserDetailToChange(); 
  

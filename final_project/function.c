@@ -13,7 +13,7 @@
 
 
 
-
+AccountInfo info[MAX_USERS];
 User users[MAX_USERS];
 int userCount = 0;
 int userExists(const char *userId) {
@@ -94,12 +94,12 @@ void saveUsersToFile() {
 
     fwrite(&userCount, sizeof(int), 1, file);
     fwrite(users, sizeof(User), userCount, file);
+    fwrite(info, sizeof(AccountInfo), userCount, file);
 
     // Debug: Print data being saved
     printf("Saving %d users to file\n", userCount);
     for (int i = 0; i < userCount; i++) {
-        printf("User %d: ID=%s, Email=%s, Password=%s\n", 
-               i + 1, users[i].userId, users[i].email, users[i].password);
+        printf("User %d: ID=%s, Email=%s, Password=%s\n", i, users[i].userId, users[i].email, info[i].password);
     }
 
     fclose(file);
@@ -129,7 +129,19 @@ void loadUsersFromFile() {
         userCount = items_read;
     }
 
+    // Read the account info data
+    items_read = fread(info, sizeof(AccountInfo), userCount, file);
+    if (items_read != userCount) {
+        printf("Warning: Expected %d account info records but read %zu. Adjusting...\n", userCount, items_read);
+    }
+
     fclose(file);
+
+    // Debug: Print loaded users
+    printf("Loaded %d users from file.\n", userCount);
+    for (int i = 0; i < userCount; i++) {
+        printf("User %d: ID=%s, Email=%s, Password=%s\n", i, users[i].userId, users[i].email, info[i].password);
+    }
 
     // Validate all loaded users
     int valid_count = 0;
@@ -142,17 +154,16 @@ void loadUsersFromFile() {
             // If valid, keep it (potentially moving it earlier in the array)
             if (i != valid_count) {
                 users[valid_count] = users[i];
+                info[valid_count] = info[i];
             }
             valid_count++;
         } else {
-            printf("Warning: Found corrupted user data for ID: %s\n", 
-                   users[i].userId);
+            printf("Warning: Found corrupted user data for ID: %s\n", users[i].userId);
         }
     }
 
     if (valid_count != userCount) {
-        printf("Warning: %d out of %d users had invalid data and were removed.\n",
-               userCount - valid_count, userCount);
+        printf("Warning: %d out of %d users had invalid data and were removed.\n", userCount - valid_count, userCount);
         userCount = valid_count;
         saveUsersToFile(); // Save the cleaned-up data
     }
@@ -391,14 +402,15 @@ void addUser() {
     } while (strlen(newUser.name) == 0);
 
   do {
-        printf("Enter Username: ");
-        fgets(newUser.username, sizeof(newUser.username), stdin);
-        newUser.username[strcspn(newUser.username, "\n")] = '\0';
-
-        if (strlen(newUser.username) == 0) {
-            printf("Name cannot be empty. Please enter again!\n");
-        }
-    } while (strlen(newUser.name) == 0);
+      printf("Enter Username: ");
+      fgets(info[userCount].username, sizeof(info[userCount].username), stdin);
+      info[userCount].username[strcspn(info[userCount].username, "\n")] = '\0';
+  
+      if (strlen(info[userCount].username) == 0) {
+          printf("Username cannot be empty. Please enter again!\n");
+      }
+  } while (strlen(info[userCount].username) == 0);
+  
     do {
         printf("Enter Phone: ");
         fgets(temp, sizeof(temp), stdin);
@@ -409,7 +421,7 @@ void addUser() {
         }
     } while (!isValidPhone(temp));
     strcpy(newUser.phone, temp);
-strcpy(newUser.password, temp);
+strcpy(info[userCount].password, temp);
     do {
         printf("Enter Email: ");
         fgets(temp, sizeof(temp), stdin);
@@ -707,7 +719,7 @@ void showUserDetail() {
             printf("%8s%s", "", "===========================================\n");
             printf("%11s%s\n", "ID:", users[i].userId);
             printf("%13s%s\n", "Name:", users[i].name);
-             printf("%17s%s\n", "Username:", users[i].username);
+             printf("%17s%s\n", "Username:", info[i].username);
             printf("%8s%s\n", "", "Date of Birth:");
             printf("%19s%d\n", "Day:", users[i].dateOfBirth.day);
             printf("%19s%d\n", "Month:", users[i].dateOfBirth.month);
@@ -749,7 +761,7 @@ void showUserDetailToChange() {
             printf("%8s%s", "", "===========================================\n");
             printf("%11s%s\n", "ID:", users[i].userId);
             printf("%13s%s\n", "Name:", users[i].name);
-            printf("%17s%s\n", "Username:", users[i].username);
+            printf("%17s%s\n", "Username:", info[i].username);
             printf("%8s%s\n", "", "Date of Birth:");
             printf("%19s%d\n", "Day:", users[i].dateOfBirth.day);
             printf("%19s%d\n", "Month:", users[i].dateOfBirth.month);
@@ -874,65 +886,158 @@ void userLogin() {
     int foundUser = -1;
     char choice;
 
-    loadUsersFromFile(); // Load d? li?u ngý?i dùng t? file
- 
-    while (1) {  // L?p vô h?n cho ð?n khi ðãng nh?p thành công ho?c thoát
+    // Load user data from file
+    loadUsersFromFile();
+
+    // Debug: Print loaded users
+    printf("Loaded %d users from file.\n", userCount);
+    for (int i = 0; i < userCount; i++) {
+        printf("User %d: Email: %s, Password: %s\n", i, users[i].email, info[i].password);
+    }
+
+    while (1) {  // Infinite loop until login is successful or user exits
         system("cls");
         printf("\n\n\n\n\n\n");
         printf("%45s============ USER LOGIN ============\n", "");
-
+        
         printf("%45sEnter email: ", "");
         fgets(inputEmail, sizeof(inputEmail), stdin);
         inputEmail[strcspn(inputEmail, "\n")] = '\0';
-
-        if (strcmp(inputEmail, "exit") == 0) return; // Quay l?i menu
-
+        
+        // Debug: Print input email
+        printf("Input Email: %s\n", inputEmail);
+        
+        // Check if user wants to exit right after entering email
+        if (strcmp(inputEmail, "exit") == 0) {
+            return;  // Return to role menu
+        }
+        
         printf("%45sEnter password: ", "");
         inputMaskedPassword(inputPassword, sizeof(inputPassword));
         inputPassword[strcspn(inputPassword, "\r\n")] = '\0';
         printf("\n");
-
-        if (strcmp(inputPassword, "exit") == 0) return; // Quay l?i menu
-
-        // Ki?m tra tài kho?n trong danh sách
+        
+        // Debug: Print input password
+        printf("Input Password: %s\n", inputPassword);
+        
+        // Check if user wants to exit after entering password
+        if (strcmp(inputPassword, "exit") == 0) {
+            return;  // Return to role menu
+        }
+        
+        // Find user by email
         foundUser = -1;
         for (int i = 0; i < userCount; i++) {
             if (strcmp(users[i].email, inputEmail) == 0) {
-                if (users[i].status) { // Tài kho?n b? khóa
+                if (users[i].status) {
                     printf("%45sThis account is locked. Please contact admin.\n", "");
                     Sleep(2000);
                     printf("%45sPress any key to try again or 'b' to go back to role menu: ", "");
                     choice = getchar();
-                    while (getchar() != '\n'); // Xóa bo dem
-
-                    if (choice == 'b' || choice == 'B') return; // Quay lai menu
-                    break;
+                    while (getchar() != '\n');  // Clear input buffer
+                    
+                    if (choice == 'b' || choice == 'B') {
+                        return;  // Back to role menu
+                    }
+                    break;  // Break out of the for loop, but stay in the while loop
                 }
                 
-                if (strcmp(users[i].password, inputPassword) == 0) {
+                if (strcmp(info[i].password, inputPassword) == 0) {
                     foundUser = i;
                     break;
                 }
             }
         }
-
+        
         if (foundUser != -1) {
             printf("%45sLogin successful! Welcome, %s\n", "", users[foundUser].name);
             Sleep(2000);
             userMenu();
-            return;  
-        } else {
+            return;  // After user menu, return to role menu
+        } else if (foundUser == -1 && strcmp(inputEmail, "exit") != 0 && strcmp(inputPassword, "exit") != 0) {
             printf("%45sInvalid email or password!\n", "");
             printf("%45sPress any key to try again or 'b' to go back to role menu: ", "");
             choice = getchar();
-            while (getchar() != '\n'); // Xóa b? ð?m
-
-            if (choice == 'b' || choice == 'B') return; 
+            while (getchar() != '\n');  // Clear input buffer
+            
+            if (choice == 'b' || choice == 'B') {
+                return;  // Back to role menu
+            }
         }
     }
 }
 
-//thay doi thong tin cua nguoi dung
+void UserMoneyManagement() {
+	system("cls");
+    char userId[20];
+    printf("Enter User ID for money management: ");
+    fgets(userId, sizeof(userId), stdin);
+    userId[strcspn(userId, "\n")] = '\0';
+
+    int found = 0;
+    for (int i = 0; i < userCount; i++) {
+        if (strcmp(users[i].userId, userId) == 0) {
+            found = 1;
+            printf("User %s found!\n", userId);
+            int choice;
+            do {system("cls");
+                printf("\n*** User Money Management ***\n");
+                printf("[1] Deposit Money\n");
+                printf("[2] Withdraw Money\n");
+                printf("[3] Check Balance\n");
+                printf("[0] Back to User Menu\n");
+                printf("Enter your choice: ");
+                scanf("%d", &choice);
+                while (getchar() != '\n'); // Clear buffer
+
+                switch (choice) {
+                    case 1: {
+                        double amount;
+                        printf("Enter amount to deposit: ");
+                        scanf("%lf", &amount);
+                        while (getchar() != '\n'); // Clear buffer
+                        if (amount > 0) {
+                            info[i].balance += amount;
+                            printf("Deposited %.2lf successfully! New balance: %.2lf\n", amount, info[i].balance);
+                        } else {
+                            printf("Invalid amount! Please enter a positive number.\n");
+                        }
+                        break;
+                    }
+                    case 2: {
+                        double amount;
+                        printf("Enter amount to withdraw: ");
+                        scanf("%lf", &amount);
+                        while (getchar() != '\n'); // Clear buffer
+                        if (amount > 0 && amount <= info[i].balance) {
+                            info[i].balance -= amount;
+                            printf("Withdrew %.2lf successfully! New balance: %.2lf\n", amount, info[i].balance);
+                        } else {
+                            printf("Invalid amount! Please enter a positive number less than or equal to the balance.\n");
+                        }
+                        break;
+                    }
+                    case 3:
+                        printf("Current balance: %.2lf\n", info[i].balance);
+                        break;
+                    case 0:
+                        return;
+                    default:
+                        printf("Invalid choice! Please try again.\n");
+                }
+            } while (choice != 0);
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("User ID not found!\n");
+    }
+
+    printf("Press ENTER to go back...");
+    while (getchar() != '\n');
+}
+//Thay doi thong tin nguoi dung o user
 void changeUserInfo(int userIndex) {
     do { 
         printf("Enter new name: ");
@@ -945,12 +1050,12 @@ void changeUserInfo(int userIndex) {
 
     do { 
         printf("Enter new Username: ");
-        fgets(users[userIndex].username, sizeof(users[userIndex].username), stdin);
-        users[userIndex].username[strcspn(users[userIndex].username, "\n")] = '\0'; 
-        if (strlen(users[userIndex].username) == 0) {
+        fgets(info[userIndex].username, sizeof(info[userIndex].username), stdin);
+        info[userIndex].username[strcspn(info[userIndex].username, "\n")] = '\0'; 
+        if (strlen(info[userIndex].username) == 0) {
             printf("Username cannot be empty. Please enter again!\n");
         }
-    } while (strlen(users[userIndex].username) == 0);
+    } while (strlen(info[userIndex].username) == 0);
 
     // Validate phone input
     char temp[100];
@@ -1012,77 +1117,6 @@ void changeUserInfo(int userIndex) {
     printf("User info updated successfully!\n");
     printf("Press ENTER to go back...");
     getchar();
-}
-
-void UserMoneyManagement() {
-	system("cls");
-    char userId[20];
-    printf("Enter User ID for money management: ");
-    fgets(userId, sizeof(userId), stdin);
-    userId[strcspn(userId, "\n")] = '\0';
-
-    int found = 0;
-    for (int i = 0; i < userCount; i++) {
-        if (strcmp(users[i].userId, userId) == 0) {
-            found = 1;
-            printf("User %s found!\n", userId);
-            int choice;
-            do {system("cls");
-                printf("\n*** User Money Management ***\n");
-                printf("[1] Deposit Money\n");
-                printf("[2] Withdraw Money\n");
-                printf("[3] Check Balance\n");
-                printf("[0] Back to User Menu\n");
-                printf("Enter your choice: ");
-                scanf("%d", &choice);
-                while (getchar() != '\n'); // Clear buffer
-
-                switch (choice) {
-                    case 1: {
-                        double amount;
-                        printf("Enter amount to deposit: ");
-                        scanf("%lf", &amount);
-                        while (getchar() != '\n'); // Clear buffer
-                        if (amount > 0) {
-                            users[i].balance += amount;
-                            printf("Deposited %.2lf successfully! New balance: %.2lf\n", amount, users[i].balance);
-                        } else {
-                            printf("Invalid amount! Please enter a positive number.\n");
-                        }
-                        break;
-                    }
-                    case 2: {
-                        double amount;
-                        printf("Enter amount to withdraw: ");
-                        scanf("%lf", &amount);
-                        while (getchar() != '\n'); // Clear buffer
-                        if (amount > 0 && amount <= users[i].balance) {
-                            users[i].balance -= amount;
-                            printf("Withdrew %.2lf successfully! New balance: %.2lf\n", amount, users[i].balance);
-                        } else {
-                            printf("Invalid amount! Please enter a positive number less than or equal to the balance.\n");
-                        }
-                        break;
-                    }
-                    case 3:
-                        printf("Current balance: %.2lf\n", users[i].balance);
-                        break;
-                    case 0:
-                        return;
-                    default:
-                        printf("Invalid choice! Please try again.\n");
-                }
-            } while (choice != 0);
-            break;
-        }
-    }
-
-    if (!found) {
-        printf("User ID not found!\n");
-    }
-
-    printf("Press ENTER to go back...");
-    while (getchar() != '\n');
 }
 
 //void transaction(){
