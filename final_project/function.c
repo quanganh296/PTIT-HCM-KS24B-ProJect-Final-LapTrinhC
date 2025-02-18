@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <windows.h>
+#include <conio.h> 
 #include "datatype.h"
 #include "function.h"
 #define MAX_USERS 100
@@ -96,10 +97,17 @@ void saveUsersToFile() {
 void loadUsersFromFile() {
     FILE *file = fopen(DATA_FILE, "rb");
     if (file) {
+    	  printf("Loaded %d users from file\n", userCount);
+		    for (int i = 0; i < userCount; i++) {
+		        printf("User %d: ID=%s, Email=%s, Has password: %s\n", 
+		               i+1, users[i].userId, users[i].email, 
+		               strlen(users[i].password) > 0 ? "Yes" : "No");
         // Read user count
         size_t items_read = fread(&userCount, sizeof(int), 1, file);
         if (items_read != 1) {
             userCount = 0;
+             fread(&userCount, sizeof(int), 1, file);
+			        fread(users, sizeof(User), userCount, file);
             fclose(file);
             printf("Warning: Couldn't read user count from file.\n");
             return;
@@ -152,7 +160,7 @@ void loadUsersFromFile() {
             userCount = valid_count;
             saveUsersToFile(); // Save the cleaned-up data
         }
-    } else {
+    }}else {
         userCount = 0;
     }
 }
@@ -165,7 +173,7 @@ void resetUserData() {
     saveUsersToFile();
     printf("User data has been reset. You can now add new users.\n");
 }
-
+// MENU CUA NGUOi DUNG
 void userMenu() {
     int userChoice;
     do {  
@@ -175,8 +183,9 @@ void userMenu() {
         printf("%8s============================\n", "");
         printf("%8s[1] Show user details\n", "");
         printf("%8s[2] Change user info\n", "");
-        printf("%8s[3] User Guideline\n", "");
-        printf("%8s[4] About Us\n", "");
+        printf("%8s[3] User money management\n","");
+        printf("%8s[4] User Guideline\n", "");
+        printf("%8s[5] About Us\n", "");
         printf("%8s[0] Back to role menu\n", "");
         printf("%8s============================\n", "");
         printf("%8sEnter your choice: ", "");
@@ -194,10 +203,13 @@ void userMenu() {
                
                 break;
             case 3:
+				UserMoneyManagement();
+            	break;
+            case 4:
                 userGuideline();
                
                 break;
-            case 4:
+            case 5:
                 aboutUs();
                 
                 break;
@@ -239,7 +251,7 @@ void displayRoleMenu() {
                 adminLogin(); 
                 break;
             case 2:
-                userMenu();
+            	userLogin();
                 break;
             default:
                 printf("Invalid choice! Please choose again!\n");
@@ -342,29 +354,14 @@ system("cls");
 
 
 
-
-void displaySortUsers() {
-    sortUsersByName(); 
-    
-    printf("\n========================================================================================\n");
-    printf("| %-10s | %-20s | %-20s | %-15s | %-10s |\n", "ID", "Name", "Email", "Phone", "Status");
-    printf("========================================================================================\n");
-    for (int i = 0; i < userCount; i++) {
-        printf("| %-10s | %-20s | %-20s | %-15s | %-10s |\n", 
-            users[i].userId, users[i].name, users[i].email, users[i].phone, users[i].status ? "Lock" : "Unlock");
-    }
-    printf("========================================================================================\n");
-    printf("Press ENTER to go back...");
-    while (getchar() != '\n'); 
-}
-
 void addUser() {
+	User newUser;
+	  
     if (userCount >= MAX_USERS) {
         printf("User list is full!\n");
         return;
     }
     
-    User newUser;
     // Initialize all fields to zero first
     memset(&newUser, 0, sizeof(User));
     
@@ -419,7 +416,7 @@ void addUser() {
         }
     } while (!isValidPhone(temp));
     strcpy(newUser.phone, temp);
-
+strcpy(newUser.password, temp);
     do {
         printf("Enter Email: ");
         fgets(temp, sizeof(temp), stdin);
@@ -472,9 +469,8 @@ void addUser() {
 
     // Set default status (unlocked)
     newUser.status = 0;
-
-    users[userCount++] = newUser;
-    saveUsersToFile();
+users[userCount++] = newUser;
+	    saveUsersToFile();
     printf("Add User successfully! Press Enter to exit");
     while (getchar() != '\n'); 
 }      
@@ -570,10 +566,9 @@ void displayUsers() {
     int choice;
     printf("\n*** Display Users ***\n");
     printf("============================\n");
-    printf("[1] Show Users (Unsorted)\n");
+    printf("[1] Show Users\n");
     printf("[2] Sort Users By Name\n");
-    printf("[3] Show Users sorted by name\n");
-    printf("[4] Delete Users \n");
+    printf("[3] Delete Users \n");
     printf("[0] Back to Main Menu\n");
     printf("============================\n");
     printf("Enter Your Choice: ");
@@ -588,9 +583,6 @@ void displayUsers() {
             menuSortUsers();
             break;
             case 3:
-            displaySortUsers();
-        break;
-        case 4:
         	displayDeleteUsers();
         	break;
         case 0:
@@ -769,53 +761,137 @@ printf("%8s========= See You Soon ======\n", "");
 } while (choice != 'b');
 }
 //DANG NHAP CUA ADMIN 
-void adminLogin() { 
+void inputMaskedPassword(char *password, int maxLength) {
+    char ch;
+    int i = 0;
+
+    while (i < maxLength - 1) {
+        ch = _getch(); // Lay mot ky tu nhung khong hien thi
+
+        if (ch == 13) // Neu nhan Enter -> ket thuc nhap
+            break;
+        else if (ch == 8 && i > 0) { // Neu nhan Backspace -> xoa ky tu
+            printf("\b \b"); // Xóa ky tu tren man hinh
+            i--;
+        } else if (ch != 8) { // Neu la ky tu hop le
+            password[i++] = ch;
+            printf("%c", ch); // Hien thi ky tu thuc te
+            Sleep(200); // Cho 1 giây
+            printf("\b*"); // Thay the ky tu bang '*'
+        }
+    }
+    password[i] = '\0'; // Ket thuc chuoi
+}
+
+
+void adminLogin() {
     char inputEmail[50];
     char inputPassword[50];
     char correctEmail[] = "qn50606@gmail.com";
-    char correctPassword[] = "0825862962"; 
+    char correctPassword[] = "0825862962";
 
     system("cls");
 
-    //lap den khi email va mat khau nhap dung
-    do { system("cls"); 
-     printf("\n\n\n\n\n\n");
-	printf("%45s============ LOGIN ============\n","");
-       
-        printf("%45sEnter admin email: ","");
+    // Lap den khi nhap dung email
+    do {
+        system("cls");
+        printf("\n\n\n\n\n\n");
+        printf("%45s============ LOGIN ============\n", "");
+
+        printf("%45sEnter admin email: ", "");
         fgets(inputEmail, sizeof(inputEmail), stdin);
-        inputEmail[strcspn(inputEmail, "\n")] = '\0'; 
+        inputEmail[strcspn(inputEmail, "\n")] = '\0';
 
         if (strcmp(inputEmail, correctEmail) != 0) {
-            printf("*8sInvalid email! Please try again.\n","");
+            printf("%45sInvalid email! Please try again.\n", "");
             Sleep(1000);
         }
     } while (strcmp(inputEmail, correctEmail) != 0);
 
+    // Lap den khi nhap dung mat khau
     do {
-        printf("%45sEnter admin password: ","");
-        fgets(inputPassword, sizeof(inputPassword), stdin);
-        inputPassword[strcspn(inputPassword, "\n")] = '\0';
+        printf("%45sEnter admin password: ", "");
+        inputMaskedPassword(inputPassword, sizeof(inputPassword));
+        printf("\n");
 
         if (strcmp(inputPassword, correctPassword) != 0) {
-            printf("%45sIncorrect password! Please try again.\n","");
+            printf("%45sIncorrect password! Please try again.\n", "");
             Sleep(1000);
         }
     } while (strcmp(inputPassword, correctPassword) != 0);
 
-    printf("%45sLogin successful!\n","");
-    Sleep(2000);  
-    adminMenu(); 
+    printf("%45sLogin successful!\n", "");
+    Sleep(2000);
+    adminMenu();
 }
 
 
 
 
+void userLogin() {
+    char inputEmail[50];
+    char inputPassword[50];
+    int foundUser = -1;
+    char choice;
 
-void userLogin(){
-	printf("User login\n");
-	
+    loadUsersFromFile(); // Load d? li?u ngý?i dùng t? file
+ 
+    while (1) {  // L?p vô h?n cho ð?n khi ðãng nh?p thành công ho?c thoát
+        system("cls");
+        printf("\n\n\n\n\n\n");
+        printf("%45s============ USER LOGIN ============\n", "");
+
+        printf("%45sEnter email: ", "");
+        fgets(inputEmail, sizeof(inputEmail), stdin);
+        inputEmail[strcspn(inputEmail, "\n")] = '\0';
+
+        if (strcmp(inputEmail, "exit") == 0) return; // Quay l?i menu
+
+        printf("%45sEnter password: ", "");
+        inputMaskedPassword(inputPassword, sizeof(inputPassword));
+        inputPassword[strcspn(inputPassword, "\r\n")] = '\0';
+        printf("\n");
+
+        if (strcmp(inputPassword, "exit") == 0) return; // Quay l?i menu
+
+        // Ki?m tra tài kho?n trong danh sách
+        foundUser = -1;
+        for (int i = 0; i < userCount; i++) {
+            if (strcmp(users[i].email, inputEmail) == 0) {
+                if (users[i].status) { // Tài kho?n b? khóa
+                    printf("%45sThis account is locked. Please contact admin.\n", "");
+                    Sleep(2000);
+                    printf("%45sPress any key to try again or 'b' to go back to role menu: ", "");
+                    choice = getchar();
+                    while (getchar() != '\n'); // Xóa bo dem
+
+                    if (choice == 'b' || choice == 'B') return; // Quay lai menu
+                    break;
+                }
+                
+                if (strcmp(users[i].password, inputPassword) == 0) {
+                    foundUser = i;
+                    break;
+                }
+            }
+        }
+
+        if (foundUser != -1) {
+            printf("%45sLogin successful! Welcome, %s\n", "", users[foundUser].name);
+            Sleep(2000);
+            userMenu();
+            return;  
+        } else {
+            printf("%45sInvalid email or password!\n", "");
+            printf("%45sPress any key to try again or 'b' to go back to role menu: ", "");
+            choice = getchar();
+            while (getchar() != '\n'); // Xóa b? ð?m
+
+            if (choice == 'b' || choice == 'B') return; 
+        }
+    }
 }
+
 //thay doi thong tin cua nguoi dung
 void changeUserInfo() {
     char userId[20];
@@ -916,7 +992,78 @@ void changeUserInfo() {
     printf("Press ENTER to go back...");
     getchar();
 }
-//
+
+void UserMoneyManagement() {
+	system("cls");
+    char userId[20];
+    printf("Enter User ID for money management: ");
+    fgets(userId, sizeof(userId), stdin);
+    userId[strcspn(userId, "\n")] = '\0';
+
+    int found = 0;
+    for (int i = 0; i < userCount; i++) {
+        if (strcmp(users[i].userId, userId) == 0) {
+            found = 1;
+            printf("User %s found!\n", userId);
+            int choice;
+            do {system("cls");
+                printf("\n*** User Money Management ***\n");
+                printf("[1] Deposit Money\n");
+                printf("[2] Withdraw Money\n");
+                printf("[3] Check Balance\n");
+                printf("[0] Back to User Menu\n");
+                printf("Enter your choice: ");
+                scanf("%d", &choice);
+                while (getchar() != '\n'); // Clear buffer
+
+                switch (choice) {
+                    case 1: {
+                        double amount;
+                        printf("Enter amount to deposit: ");
+                        scanf("%lf", &amount);
+                        while (getchar() != '\n'); // Clear buffer
+                        if (amount > 0) {
+                            users[i].balance += amount;
+                            printf("Deposited %.2lf successfully! New balance: %.2lf\n", amount, users[i].balance);
+                        } else {
+                            printf("Invalid amount! Please enter a positive number.\n");
+                        }
+                        break;
+                    }
+                    case 2: {
+                        double amount;
+                        printf("Enter amount to withdraw: ");
+                        scanf("%lf", &amount);
+                        while (getchar() != '\n'); // Clear buffer
+                        if (amount > 0 && amount <= users[i].balance) {
+                            users[i].balance -= amount;
+                            printf("Withdrew %.2lf successfully! New balance: %.2lf\n", amount, users[i].balance);
+                        } else {
+                            printf("Invalid amount! Please enter a positive number less than or equal to the balance.\n");
+                        }
+                        break;
+                    }
+                    case 3:
+                        printf("Current balance: %.2lf\n", users[i].balance);
+                        break;
+                    case 0:
+                        return;
+                    default:
+                        printf("Invalid choice! Please try again.\n");
+                }
+            } while (choice != 0);
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("User ID not found!\n");
+    }
+
+    printf("Press ENTER to go back...");
+    while (getchar() != '\n');
+}
+
 //void transaction(){
 //	
 //}

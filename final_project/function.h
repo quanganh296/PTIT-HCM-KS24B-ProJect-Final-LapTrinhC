@@ -35,8 +35,12 @@ void adminMenu();
 void userMenu();
 
 // Login
+void inputMaskedPassword();
 void adminLogin();
+void userLogin();
 //change user info
 void changeUserInfo();
 void resetUserData();
+//User management
+void UserMoneyManagement();
 #endif

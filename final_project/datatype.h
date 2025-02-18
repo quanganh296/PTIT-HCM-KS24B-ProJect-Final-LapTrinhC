@@ -39,7 +39,7 @@
 	      int status;
 	      char username[20];
 		    char password[20];
-		    
+		    double balance;
 	} User;
 		extern User users[];
 	#endif
