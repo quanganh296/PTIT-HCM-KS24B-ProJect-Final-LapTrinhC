@@ -796,6 +796,8 @@ void adminLogin() {
     do {
         system("cls");
         printf("\n\n\n\n\n\n");
+        printf("%45sAdmin email: qn50606@gmail.com\n","");
+        printf("%45sAdmin pass: 0825862962\n","");
         printf("%45s============ LOGIN ============\n", "");
 
         printf("%45sEnter admin email: ", "");
