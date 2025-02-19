@@ -25,7 +25,7 @@ clean: clean-custom
 $(BIN): $(OBJ)
 	$(CC) $(LINKOBJ) -o "$(BIN)" $(LIBS)
 
-main.o: main.c datatype.h function.h
+main.o: main.c function.h
 	$(CC) -c main.c -o main.o $(CFLAGS) 
 
 function.o: function.c datatype.h function.h

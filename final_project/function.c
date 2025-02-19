@@ -81,7 +81,12 @@ int isValidPasswordAdmin(const char *password, const char *phone) {
 
     return 1;
 }
-
+//doi mau chu
+void TextColor(int x)//X là ma màu
+{
+     HANDLE h= GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(h, x);
+}
 
 
 
@@ -182,6 +187,7 @@ void userMenu() {
     int userChoice;
     do {  
         system("cls");
+        TextColor(1);
         printf("\n*** Customers Management System Using C ***\n");
         printf("\n%15s USER MENU\n", "");
         printf("%8s============================\n", "");
@@ -234,6 +240,7 @@ void displayRoleMenu() {
     int roleChoice;
     do { 
         system("cls");
+        TextColor(1);
         printf("\n*** Bank Management System Using C ***\n");
         printf("\n%9s CHOOSE YOUR ROLE\n","");
         printf("%5s========================\n","");
@@ -366,7 +373,7 @@ void addUser() {
         return;
     }
     
-    // Initialize all fields to zero first
+    // Initialize all fields to 0 first
     memset(&newUser, 0, sizeof(User));
     
     char temp[100];
@@ -714,9 +721,11 @@ void showUserDetail() {
     for (int i = 0; i < userCount; i++) {
         if (strcmp(users[i].userId, userId) == 0) {
             found = 1;
+            TextColor(1);
             printf("%8s%s", "", "===========================================\n");
             printf("%8s%s", "", "             USER DETAILS\n");
             printf("%8s%s", "", "===========================================\n");
+            TextColor(7);
             printf("%11s%s\n", "ID:", users[i].userId);
             printf("%13s%s\n", "Name:", users[i].name);
              printf("%17s%s\n", "Username:", info[i].username);
@@ -727,6 +736,7 @@ void showUserDetail() {
             printf("%14s%s\n", "Phone:", users[i].phone);
             printf("%14s%s\n", "Email:", users[i].email);
             printf("%15s%s\n", "Status:", users[i].status ? "Locked" : "Unlocked");
+             TextColor(1);
             printf("%10s%s", "", "===========================================\n");
             break;
         }
@@ -756,9 +766,11 @@ void showUserDetailToChange() {
     for (int i = 0; i < userCount; i++) {
         if (strcmp(users[i].userId, userId) == 0) {
             found = 1;
+             TextColor(1);
             printf("%8s%s", "", "===========================================\n");
             printf("%8s%s", "", "            CHANGE USER DETAILS\n");
             printf("%8s%s", "", "===========================================\n");
+              TextColor(7);
             printf("%11s%s\n", "ID:", users[i].userId);
             printf("%13s%s\n", "Name:", users[i].name);
             printf("%17s%s\n", "Username:", info[i].username);
@@ -769,6 +781,7 @@ void showUserDetailToChange() {
             printf("%14s%s\n", "Phone:", users[i].phone);
             printf("%14s%s\n", "Email:", users[i].email);
             printf("%15s%s\n", "Status:", users[i].status ? "Locked" : "Unlocked");
+             TextColor(1);
             printf("%10s%s", "", "===========================================\n");
 
             // Call changeUserInfo function to change user details
@@ -789,13 +802,16 @@ void showUserDetailToChange() {
 void showUsers() {
 	 system("cls");
 	 int choice;
+	  TextColor(1);
      printf("\n=============+======================+===========================+=================+=========\n");
     printf("| %-10s | %-20s | %-25s | %-15s | %-5s |\n", "ID", "Name", "Email", "Phone", "Status");
     printf("===========================================================================================\n");
+     TextColor(7);
     for (int i = 0; i < userCount; i++) {
     printf("| %-10s | %-20s | %-25s | %-15s | %-6s |\n", 
             users[i].userId, users[i].name, users[i].email, users[i].phone, users[i].status ? "Lock" : "Open");
     }
+     TextColor(1);
      printf("=============+======================+===========================+=================+=========\n");
 do {
     printf("Go back(b)? or Exit(0)?: ");
@@ -980,7 +996,8 @@ void UserMoneyManagement() {
             found = 1;
             printf("User %s found!\n", userId);
             int choice;
-            do {system("cls");
+            do {
+            
                 printf("\n*** User Money Management ***\n");
                 printf("[1] Deposit Money\n");
                 printf("[2] Withdraw Money\n");
