@@ -82,7 +82,7 @@ int isValidPasswordAdmin(const char *password, const char *phone) {
     return 1;
 }
 //doi mau chu
-void TextColor(int x)//X l‡ ma m‡u
+void TextColor(int x)//X l√† ma m√†u
 {
      HANDLE h= GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(h, x);
@@ -323,13 +323,30 @@ void adminMenu(){
 }
 
 void sortUsersByName() {
-    qsort(users, userCount, sizeof(User), compareByName);
-	printf("Sorted by Name (A-Z) successfully!\n");
+    for (int i = 0; i < userCount - 1; i++) {
+        for (int j = 0; j < userCount - i - 1; j++) {
+            if (strcmp(users[j].name, users[j + 1].name) > 0) {
+                User temp = users[j];
+                users[j] = users[j + 1];
+                users[j + 1] = temp;
+            }
+        }
+    }
+    printf("Sorted by Name (A-Z) using Bubble Sort successfully!\n");
 }
 void sortUsersByNameDescending() {
-    qsort(users, userCount, sizeof(User), compareByNameDescending);
-    printf("Sorted by Name (Z-A) successfully!\n");
+    for (int i = 0; i < userCount - 1; i++) {
+        for (int j = 0; j < userCount - i - 1; j++) {
+            if (strcmp(users[j].name, users[j + 1].name) < 0) {
+                User temp = users[j];
+                users[j] = users[j + 1];
+                users[j + 1] = temp;
+            }
+        }
+    }
+    printf("Sorted by Name (Z-A) using Bubble Sort successfully!\n");
 }
+
 void menuSortUsers(){
     
 system("cls");
@@ -837,12 +854,12 @@ void inputMaskedPassword(char *password, int maxLength) {
         if (ch == 13) // Neu nhan Enter -> ket thuc nhap
             break;
         else if (ch == 8 && i > 0) { // Neu nhan Backspace -> xoa ky tu
-            printf("\b \b"); // XÛa ky tu tren man hinh
+            printf("\b \b"); // X√≥a ky tu tren man hinh
             i--;
         } else if (ch != 8) { // Neu la ky tu hop le
             password[i++] = ch;
             printf("%c", ch); // Hien thi ky tu thuc te
-            Sleep(200); // Cho 1 gi‚y
+            Sleep(200); // Cho 1 gi√¢y
             printf("\b*"); // Thay the ky tu bang '*'
         }
     }
